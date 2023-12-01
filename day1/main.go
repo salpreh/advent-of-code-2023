@@ -10,20 +10,33 @@ import (
 )
 
 func main() {
-	input := getExampleInput()
-	fmt.Printf("Example result: %d\n", calibrator.CalculateBasicTrebuchetCalibration(input))
+	input := getPart1ExampleInput()
+	fmt.Printf("Part 1 example result: %d\n", calibrator.CalculateBasicTrebuchetCalibration(input))
 
 	input = getPart1Input()
 	fmt.Printf("Part 1 result: %d\n", calibrator.CalculateBasicTrebuchetCalibration(input))
 
+	input = getPart2ExampleInput()
+	fmt.Printf("Part 2 example result: %d\n", calibrator.CalculateTrebuchetCalibration(input))
+
+	input = getPart2Input()
+	fmt.Printf("Part 2 result: %d\n", calibrator.CalculateTrebuchetCalibration(input))
 }
 
-func getExampleInput() []string {
-	return readInputFile("input/example.txt")
+func getPart1ExampleInput() []string {
+	return readInputFile("input/p1Example.txt")
 }
 
 func getPart1Input() []string {
 	return readInputFile("input/p1.txt")
+}
+
+func getPart2ExampleInput() []string {
+	return readInputFile("input/p2Example.txt")
+}
+
+func getPart2Input() []string {
+	return readInputFile("input/p2.txt")
 }
 
 func readInputFile(filePath string) []string {
