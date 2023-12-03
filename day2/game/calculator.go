@@ -1,5 +1,20 @@
 package game
 
+import (
+	"regexp"
+	"strconv"
+	"strings"
+)
+
+const matchSep = ";"
+
+var (
+	gameRegex, _  = regexp.Compile(`Game (\d+):`)
+	blueRegex, _  = regexp.Compile(`(\d+) blue`)
+	redRegex, _   = regexp.Compile(`(\d+) red`)
+	greenRegex, _ = regexp.Compile(`(\d+) green`)
+)
+
 func SumPossibleGames(gamesResults []Results, gamePieces Record) int {
 	result := 0
 	for _, gameResults := range gamesResults {
@@ -18,6 +33,38 @@ func SumGameRecordsPowers(gameResults []Results) int {
 	}
 
 	return powerResult
+}
+
+func ParseInputLines(lines []string) []Results {
+	gamesResults := make([]Results, 0)
+	for _, line := range lines {
+		gameNum, _ := strconv.Atoi(gameRegex.FindStringSubmatch(line)[1])
+		gameRecords := make([]Record, 0)
+		for _, match := range strings.Split(line, matchSep) {
+			gameRecord := Record{}
+
+			blueNum := blueRegex.FindStringSubmatch(match)
+			if blueNum != nil && len(blueNum) > 1 {
+				gameRecord.Blue, _ = strconv.Atoi(blueNum[1])
+			}
+
+			redNum := redRegex.FindStringSubmatch(match)
+			if redNum != nil && len(redNum) > 1 {
+				gameRecord.Red, _ = strconv.Atoi(redNum[1])
+			}
+
+			greenNum := greenRegex.FindStringSubmatch(match)
+			if greenNum != nil && len(greenNum) > 1 {
+				gameRecord.Green, _ = strconv.Atoi(greenNum[1])
+			}
+
+			gameRecords = append(gameRecords, gameRecord)
+		}
+
+		gamesResults = append(gamesResults, Results{gameNum, gameRecords})
+	}
+
+	return gamesResults
 }
 
 type Results struct {
