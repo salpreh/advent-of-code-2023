@@ -1,12 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"com.github/salpreh/advent-of-code-2023/day1/calibrator"
+	utils "com.github/salpreh/advent-of-code-2023/utils"
 	"fmt"
-	"os"
-	"path"
-	"runtime"
 )
 
 func main() {
@@ -24,38 +21,17 @@ func main() {
 }
 
 func getPart1ExampleInput() []string {
-	return readInputFile("input/p1Example.txt")
+	return utils.ReadInputFile("input/p1Example.txt")
 }
 
 func getPart1Input() []string {
-	return readInputFile("input/p1.txt")
+	return utils.ReadInputFile("input/p1.txt")
 }
 
 func getPart2ExampleInput() []string {
-	return readInputFile("input/p2Example.txt")
+	return utils.ReadInputFile("input/p2Example.txt")
 }
 
 func getPart2Input() []string {
-	return readInputFile("input/p2.txt")
-}
-
-func readInputFile(filePath string) []string {
-	_, currentFile, _, _ := runtime.Caller(1)
-	fullPath := path.Join(path.Dir(currentFile), filePath)
-	file, err := os.Open(fullPath)
-
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
-	reader := bufio.NewScanner(file)
-	reader.Split(bufio.ScanLines)
-
-	input := make([]string, 0)
-	for reader.Scan() {
-		input = append(input, reader.Text())
-	}
-
-	return input
+	return utils.ReadInputFile("input/p2.txt")
 }
