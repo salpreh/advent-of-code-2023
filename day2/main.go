@@ -30,6 +30,12 @@ func main() {
 
 	input = getPart1Input()
 	fmt.Printf("Part 1 result: %d\n", game.SumPossibleGames(input, gamePieces))
+
+	input = getPart2ExampleInput()
+	fmt.Printf("Part 2 example result: %d\n", game.SumGameRecordsPowers(input))
+
+	input = getPart2Input()
+	fmt.Printf("Part 2 result: %d\n", game.SumGameRecordsPowers(input))
 }
 
 func getPart1ExampleInput() []game.Results {
@@ -40,6 +46,18 @@ func getPart1ExampleInput() []game.Results {
 
 func getPart1Input() []game.Results {
 	lines := utils.ReadInputFile("input/p1.txt")
+
+	return parseInputLines(lines)
+}
+
+func getPart2ExampleInput() []game.Results {
+	lines := utils.ReadInputFile("input/p2Example.txt")
+
+	return parseInputLines(lines)
+}
+
+func getPart2Input() []game.Results {
+	lines := utils.ReadInputFile("input/p2.txt")
 
 	return parseInputLines(lines)
 }
