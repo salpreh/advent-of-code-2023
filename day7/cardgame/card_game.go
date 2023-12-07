@@ -8,8 +8,6 @@ import (
 	"strings"
 )
 
-const CardHandSize = 5
-
 const (
 	HighCard HandType = iota + 1
 	OnePair
@@ -131,15 +129,9 @@ func (h *RegularCardHand) GetBid() int {
 }
 
 func (h *RegularCardHand) GetHandType() HandType {
-	cardByType := make(map[CardType]int)
-	for _, card := range h.CardTypes {
-		count := utils.GetOrDefault(cardByType, card, 0)
-		count += 1
-		cardByType[card] = count
-	}
-
 	maxCard := 0
 	secondMaxCard := 0
+	cardByType := utils.CountByItem(h.CardTypes)
 	for _, count := range cardByType {
 		if count > maxCard {
 			secondMaxCard = maxCard
@@ -153,15 +145,7 @@ func (h *RegularCardHand) GetHandType() HandType {
 }
 
 func (h *RegularCardHand) Compare(other CardHand) int {
-	thisHand := h.GetHandType()
-	otherHand := other.GetHandType()
-	if thisHand > otherHand {
-		return -1
-	} else if otherHand > thisHand {
-		return 1
-	}
-
-	return compareByStrongestCard(h, other)
+	return compareCardHands(h, other)
 }
 
 type JokerCardHand struct {
@@ -194,15 +178,9 @@ func (h *JokerCardHand) GetBid() int {
 }
 
 func (h *JokerCardHand) GetHandType() HandType {
-	cardByType := make(map[CardType]int)
-	for _, card := range h.CardTypes {
-		count := utils.GetOrDefault(cardByType, card, 0)
-		count += 1
-		cardByType[card] = count
-	}
-
 	maxCard := 0
 	secondMaxCard := 0
+	cardByType := utils.CountByItem(h.CardTypes)
 	for card, count := range cardByType {
 		if card == Joker {
 			continue
@@ -223,7 +201,11 @@ func (h *JokerCardHand) GetHandType() HandType {
 }
 
 func (h *JokerCardHand) Compare(other CardHand) int {
-	thisHand := h.GetHandType()
+	return compareCardHands(h, other)
+}
+
+func compareCardHands(this CardHand, other CardHand) int {
+	thisHand := this.GetHandType()
 	otherHand := other.GetHandType()
 	if thisHand > otherHand {
 		return -1
@@ -231,7 +213,7 @@ func (h *JokerCardHand) Compare(other CardHand) int {
 		return 1
 	}
 
-	return compareByStrongestCard(h, other)
+	return compareByStrongestCard(this, other)
 }
 
 func compareByStrongestCard(this CardHand, other CardHand) int {
