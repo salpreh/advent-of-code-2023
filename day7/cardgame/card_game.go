@@ -4,6 +4,8 @@ import (
 	"com.github/salpreh/advent-of-code-2023/utils"
 	"fmt"
 	"sort"
+	"strconv"
+	"strings"
 )
 
 const CardHandSize = 5
@@ -42,10 +44,21 @@ func CalculateGameTotalWinnings(cards []CardHand) int {
 	totalWinnings := 0
 	totalPlayers := len(playRound)
 	for i, hand := range playRound {
-		totalWinnings += hand.Bid * (totalPlayers - i)
+		totalWinnings += hand.GetBid() * (totalPlayers - i)
 	}
 
 	return totalWinnings
+}
+
+func ParseRegularCardGame(input []string) []CardHand {
+	hands := make([]CardHand, 0)
+	for _, handData := range input {
+		data := strings.Split(handData, " ")
+		bid, _ := strconv.Atoi(data[1])
+		hands = append(hands, NewRegularHand(data[0], bid))
+	}
+
+	return hands
 }
 
 type HandType int
@@ -61,33 +74,51 @@ func (r CardPlayRound) Less(i, j int) bool {
 	lCard := r[i]
 	rCard := r[j]
 
-	return lCard.Compare(&rCard) < 0
+	return lCard.Compare(rCard) < 0
 }
 
 func (r CardPlayRound) Swap(i, j int) {
 	r[i], r[j] = r[j], r[i]
 }
 
-type CardHand struct {
-	CardTypes   []CardType
-	Bid         int
-	sortedCards []CardType
+type CardHand interface {
+	GetHandType() HandType
+	Compare(cardHand CardHand) int
+	GetCardTypes() []CardType
+	GetCardType(i int) CardType
+	GetBid() int
 }
 
-func NewHand(cards string, bid int) *CardHand {
+type RegularCardHand struct {
+	CardTypes []CardType
+	Bid       int
+}
+
+func NewRegularHand(cards string, bid int) *RegularCardHand {
 	cardTypes := make([]CardType, 0)
 	for _, cardChar := range cards {
 		card, _ := parseCard(cardChar)
 		cardTypes = append(cardTypes, card)
 	}
 
-	cardHand := &CardHand{cardTypes, bid, nil}
-	cardHand.sortCards()
+	cardHand := &RegularCardHand{cardTypes, bid}
 
 	return cardHand
 }
 
-func (h *CardHand) GetHandType() HandType {
+func (h *RegularCardHand) GetCardTypes() []CardType {
+	return h.CardTypes
+}
+
+func (h *RegularCardHand) GetCardType(i int) CardType {
+	return h.CardTypes[i]
+}
+
+func (h *RegularCardHand) GetBid() int {
+	return h.Bid
+}
+
+func (h *RegularCardHand) GetHandType() HandType {
 	cardByType := make(map[CardType]int)
 	for _, card := range h.CardTypes {
 		count := utils.GetOrDefault(cardByType, card, 0)
@@ -109,7 +140,7 @@ func (h *CardHand) GetHandType() HandType {
 	return getHandType(maxCard, secondMaxCard)
 }
 
-func (h *CardHand) Compare(other *CardHand) int {
+func (h *RegularCardHand) Compare(other CardHand) int {
 	thisHand := h.GetHandType()
 	otherHand := other.GetHandType()
 	if thisHand > otherHand {
@@ -121,9 +152,9 @@ func (h *CardHand) Compare(other *CardHand) int {
 	return h.compareByStrongestCard(other)
 }
 
-func (h *CardHand) compareByStrongestCard(other *CardHand) int {
+func (h *RegularCardHand) compareByStrongestCard(other CardHand) int {
 	for i, card := range h.CardTypes {
-		otherCard := other.CardTypes[i]
+		otherCard := other.GetCardType(i)
 		if card > otherCard {
 			return -1
 		} else if otherCard > card {
