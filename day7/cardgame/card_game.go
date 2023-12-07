@@ -21,8 +21,9 @@ const (
 )
 
 const (
-	None CardType = 0
-	Two  CardType = iota + 1
+	None CardType = iota
+	Joker
+	Two
 	Three
 	Four
 	Five
@@ -56,6 +57,17 @@ func ParseRegularCardGame(input []string) []CardHand {
 		data := strings.Split(handData, " ")
 		bid, _ := strconv.Atoi(data[1])
 		hands = append(hands, NewRegularHand(data[0], bid))
+	}
+
+	return hands
+}
+
+func ParseJokerCardGame(input []string) []CardHand {
+	hands := make([]CardHand, 0)
+	for _, handData := range input {
+		data := strings.Split(handData, " ")
+		bid, _ := strconv.Atoi(data[1])
+		hands = append(hands, NewJokerHand(data[0], bid))
 	}
 
 	return hands
@@ -149,38 +161,91 @@ func (h *RegularCardHand) Compare(other CardHand) int {
 		return 1
 	}
 
-	return h.compareByStrongestCard(other)
+	return compareByStrongestCard(h, other)
 }
 
-func (h *RegularCardHand) compareByStrongestCard(other CardHand) int {
-	for i, card := range h.CardTypes {
-		otherCard := other.GetCardType(i)
-		if card > otherCard {
+type JokerCardHand struct {
+	CardTypes []CardType
+	Bid       int
+}
+
+func NewJokerHand(cards string, bid int) *JokerCardHand {
+	cardTypes := make([]CardType, 0)
+	for _, cardChar := range cards {
+		card, _ := parseCard(cardChar)
+		cardTypes = append(cardTypes, adjustJokerCard(card))
+	}
+
+	cardHand := &JokerCardHand{cardTypes, bid}
+
+	return cardHand
+}
+
+func (h *JokerCardHand) GetCardTypes() []CardType {
+	return h.CardTypes
+}
+
+func (h *JokerCardHand) GetCardType(i int) CardType {
+	return h.CardTypes[i]
+}
+
+func (h *JokerCardHand) GetBid() int {
+	return h.Bid
+}
+
+func (h *JokerCardHand) GetHandType() HandType {
+	cardByType := make(map[CardType]int)
+	for _, card := range h.CardTypes {
+		count := utils.GetOrDefault(cardByType, card, 0)
+		count += 1
+		cardByType[card] = count
+	}
+
+	maxCard := 0
+	secondMaxCard := 0
+	for card, count := range cardByType {
+		if card == Joker {
+			continue
+		}
+		if count > maxCard {
+			secondMaxCard = maxCard
+			maxCard = count
+		} else if count > secondMaxCard {
+			secondMaxCard = count
+		}
+	}
+
+	if jokerCount, exists := cardByType[Joker]; exists {
+		maxCard += jokerCount
+	}
+
+	return getHandType(maxCard, secondMaxCard)
+}
+
+func (h *JokerCardHand) Compare(other CardHand) int {
+	thisHand := h.GetHandType()
+	otherHand := other.GetHandType()
+	if thisHand > otherHand {
+		return -1
+	} else if otherHand > thisHand {
+		return 1
+	}
+
+	return compareByStrongestCard(h, other)
+}
+
+func compareByStrongestCard(this CardHand, other CardHand) int {
+	for i, card := range this.GetCardTypes() {
+		adjustedCard := card
+		adjustedOtherCard := other.GetCardType(i)
+		if adjustedCard > adjustedOtherCard {
 			return -1
-		} else if otherCard > card {
+		} else if adjustedOtherCard > adjustedCard {
 			return 1
 		}
 	}
 
 	return 0
-}
-
-// sortCards Deprecated
-func (h *CardHand) sortCards() {
-	sortedCards := make([]CardType, CardHandSize)
-	for _, card := range h.CardTypes {
-		for i := 0; i < len(sortedCards); i++ {
-			if sortedCards[i] > card {
-				utils.AppendAndShift(sortedCards, i, card)
-				break
-			} else if sortedCards[i] == None {
-				sortedCards[i] = card
-				break
-			}
-		}
-	}
-
-	h.sortedCards = sortedCards
 }
 
 func getHandType(maxCardCount int, secondMaxCardCount int) HandType {
@@ -199,6 +264,14 @@ func getHandType(maxCardCount int, secondMaxCardCount int) HandType {
 	} else {
 		return HighCard
 	}
+}
+
+func adjustJokerCard(card CardType) CardType {
+	if card == J {
+		return Joker
+	}
+
+	return card
 }
 
 func parseCard(card rune) (CardType, error) {
