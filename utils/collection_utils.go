@@ -31,6 +31,25 @@ func CountByItem[V comparable](items []V) map[V]int {
 	return countByItem
 }
 
+func ToMap[K comparable, V any](items []V, keyExtractor func(V) K) map[K]V {
+	result := make(map[K]V)
+	for _, it := range items {
+		result[keyExtractor(it)] = it
+	}
+
+	return result
+}
+
+func ToMapP[K comparable, V any](items []V, keyExtractor func(V) K) map[K]*V {
+	result := make(map[K]*V)
+	for i, _ := range items {
+		it := items[i]
+		result[keyExtractor(it)] = &it
+	}
+
+	return result
+}
+
 func Sum(items []int) int {
 	sum := 0
 	for _, it := range items {

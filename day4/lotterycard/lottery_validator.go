@@ -22,6 +22,24 @@ func SumLotteryPoints(input []Card) int {
 	return points
 }
 
+func SumLotteryCards(input []Card) int {
+	cardsMap := utils.ToMapP(input, func(c Card) int { return c.Num })
+	totalCards := 0
+	for _, cardIt := range input {
+		card := cardsMap[cardIt.Num]
+		winningNums := len(card.GetPlayerWinningNums())
+		for cardNum := card.Num + 1; cardNum <= card.Num+winningNums; cardNum++ {
+			if targetCard, exists := cardsMap[cardNum]; exists {
+				targetCard.AddCopies(card.NumCopies)
+			}
+		}
+
+		totalCards += card.NumCopies
+	}
+
+	return totalCards
+}
+
 func ParseLotteryCards(input []string) []Card {
 	lotteryCards := make([]Card, 0)
 	for num, line := range input {
@@ -50,6 +68,7 @@ func parseNumsLine(numLine string) []int {
 
 type Card struct {
 	Num         int
+	NumCopies   int
 	WinningNums utils.Set[int]
 	PlayerNums  []int
 }
@@ -57,7 +76,7 @@ type Card struct {
 func NewLotteryCard(num int, winningNums []int, playerNums []int) *Card {
 	winningSet := utils.NewSet(winningNums)
 
-	return &Card{num, *winningSet, playerNums}
+	return &Card{num, 1, *winningSet, playerNums}
 }
 
 func (c *Card) GetPlayerWinningNums() []int {
@@ -78,4 +97,8 @@ func (c *Card) GetCardPoints() int {
 	}
 
 	return int(math.Pow(2, float64(winningNums-1)))
+}
+
+func (c *Card) AddCopies(num int) {
+	c.NumCopies += num
 }

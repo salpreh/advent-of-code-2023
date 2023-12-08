@@ -12,6 +12,12 @@ func main() {
 
 	input = getPart1Input()
 	fmt.Printf("Part 1 result: %d\n", lotterycard.SumLotteryPoints(input))
+
+	input = getPart2ExampleInput()
+	fmt.Printf("Part 2 example result: %d\n", lotterycard.SumLotteryCards(input))
+
+	input = getPart2Input()
+	fmt.Printf("Part 2 result: %d\n", lotterycard.SumLotteryCards(input))
 }
 
 func getPart1ExampleInput() []lotterycard.Card {
@@ -21,6 +27,18 @@ func getPart1ExampleInput() []lotterycard.Card {
 }
 
 func getPart1Input() []lotterycard.Card {
+	input := utils.ReadInputFile("input/p1.txt")
+
+	return lotterycard.ParseLotteryCards(input)
+}
+
+func getPart2ExampleInput() []lotterycard.Card {
+	input := utils.ReadInputFile("input/p1Example.txt")
+
+	return lotterycard.ParseLotteryCards(input)
+}
+
+func getPart2Input() []lotterycard.Card {
 	input := utils.ReadInputFile("input/p1.txt")
 
 	return lotterycard.ParseLotteryCards(input)
