@@ -30,3 +30,43 @@ func CountByItem[V comparable](items []V) map[V]int {
 
 	return countByItem
 }
+
+func Sum(items []int) int {
+	sum := 0
+	for _, it := range items {
+		sum += it
+	}
+
+	return sum
+}
+
+type Set[T comparable] struct {
+	data map[T]bool
+}
+
+func NewEmptySet[T comparable]() *Set[T] {
+	return &Set[T]{make(map[T]bool)}
+}
+
+func NewSet[T comparable](items []T) *Set[T] {
+	data := make(map[T]bool)
+	for _, item := range items {
+		data[item] = true
+	}
+
+	return &Set[T]{data}
+}
+
+func (s *Set[T]) Add(item T) {
+	s.data[item] = true
+}
+
+func (s *Set[T]) Remove(item T) {
+	delete(s.data, item)
+}
+
+func (s *Set[T]) Contains(item T) bool {
+	_, exists := s.data[item]
+
+	return exists
+}
