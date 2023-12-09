@@ -1,7 +1,6 @@
 package garden
 
 import (
-	"com.github/salpreh/advent-of-code-2023/utils"
 	"fmt"
 	"math"
 	"strconv"
@@ -55,7 +54,7 @@ func GetLowestSeedLocation(almanac Almanac) int {
 }
 
 func ParseGardenAlmanac(input []string) Almanac {
-	almanacMaps := [7]map[int]int{}
+	almanacMaps := [7][]Range{}
 	seeds := parseAlmanacSeeds(input[0])
 	for i := 1; i < len(input); {
 		line := input[i]
@@ -77,18 +76,28 @@ func ParseGardenAlmanac(input []string) Almanac {
 	return *NewAlmanac(seeds, almanacMaps)
 }
 
-type Almanac struct {
-	Seeds                 []int
-	seedToSoil            map[int]int
-	soilToFertilizer      map[int]int
-	fertilizerToWater     map[int]int
-	waterToLight          map[int]int
-	lightToTemperature    map[int]int
-	temperatureToHumidity map[int]int
-	humidityToLocation    map[int]int
+type Range struct {
+	From      int
+	To        int
+	Increment int
 }
 
-func NewAlmanac(seeds []int, almanacMaps [7]map[int]int) *Almanac {
+func (r *Range) IsInRange(num int) bool {
+	return num >= r.From && num <= r.To
+}
+
+type Almanac struct {
+	Seeds                 []int
+	seedToSoil            []Range
+	soilToFertilizer      []Range
+	fertilizerToWater     []Range
+	waterToLight          []Range
+	lightToTemperature    []Range
+	temperatureToHumidity []Range
+	humidityToLocation    []Range
+}
+
+func NewAlmanac(seeds []int, almanacMaps [7][]Range) *Almanac {
 	return &Almanac{
 		Seeds:                 seeds,
 		seedToSoil:            almanacMaps[seedsToSoilIdx],
@@ -102,31 +111,31 @@ func NewAlmanac(seeds []int, almanacMaps [7]map[int]int) *Almanac {
 }
 
 func (a Almanac) GetSeedSoil(seed int) int {
-	return utils.GetOrDefault(a.seedToSoil, seed, seed)
+	return getValueFromRanges(a.seedToSoil, seed)
 }
 
 func (a Almanac) GetSoilFertilizer(soil int) int {
-	return utils.GetOrDefault(a.soilToFertilizer, soil, soil)
+	return getValueFromRanges(a.soilToFertilizer, soil)
 }
 
 func (a Almanac) GetFertilizerWater(fertilizer int) int {
-	return utils.GetOrDefault(a.fertilizerToWater, fertilizer, fertilizer)
+	return getValueFromRanges(a.fertilizerToWater, fertilizer)
 }
 
 func (a Almanac) GetWaterLight(water int) int {
-	return utils.GetOrDefault(a.waterToLight, water, water)
+	return getValueFromRanges(a.waterToLight, water)
 }
 
 func (a Almanac) GetLightTemperature(light int) int {
-	return utils.GetOrDefault(a.lightToTemperature, light, light)
+	return getValueFromRanges(a.lightToTemperature, light)
 }
 
 func (a Almanac) GetTemperatureHumidity(temp int) int {
-	return utils.GetOrDefault(a.temperatureToHumidity, temp, temp)
+	return getValueFromRanges(a.temperatureToHumidity, temp)
 }
 
 func (a Almanac) GetHumidityLocation(humidity int) int {
-	return utils.GetOrDefault(a.humidityToLocation, humidity, humidity)
+	return getValueFromRanges(a.humidityToLocation, humidity)
 }
 
 func (a Almanac) GetSeedLocation(seed int) int {
@@ -140,13 +149,23 @@ func (a Almanac) GetSeedLocation(seed int) int {
 	return a.GetHumidityLocation(nextItem)
 }
 
-func parseAlmanacMap(input []string, lineIdx int) (map[int]int, int) {
+func getValueFromRanges(ranges []Range, num int) int {
+	for _, rng := range ranges {
+		if rng.IsInRange(num) {
+			return num + rng.Increment
+		}
+	}
+
+	return num
+}
+
+func parseAlmanacMap(input []string, lineIdx int) ([]Range, int) {
 	if !isTitleLine(input[lineIdx]) {
 		panic(fmt.Sprintf("expected title line to start map parsing: %s", input[lineIdx]))
 	}
 
 	idx := lineIdx + 1
-	almanacMap := make(map[int]int)
+	almanacMap := make([]Range, 0)
 	for ; idx < len(input); idx++ {
 		if !isNumberLine(input[idx]) {
 			break
@@ -156,9 +175,7 @@ func parseAlmanacMap(input []string, lineIdx int) (map[int]int, int) {
 		srcNum := nums[1]
 		dstNum := nums[0]
 		numRange := nums[2]
-		for i := 0; i < numRange; i++ {
-			almanacMap[srcNum+i] = dstNum + i
-		}
+		almanacMap = append(almanacMap, Range{srcNum, srcNum + numRange - 1, dstNum - srcNum})
 	}
 
 	return almanacMap, idx + 1
