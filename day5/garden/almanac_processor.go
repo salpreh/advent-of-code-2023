@@ -53,6 +53,18 @@ func GetLowestSeedLocation(almanac Almanac) int {
 	return minLocation
 }
 
+func GetLowestSeedRangedLocation(almanac Almanac) int {
+	minLocation := math.MaxInt
+	for _, seed := range almanac.GetSeedRanges() {
+		location := almanac.GetSeedLocation(seed)
+		if location < minLocation {
+			minLocation = location
+		}
+	}
+
+	return minLocation
+}
+
 func ParseGardenAlmanac(input []string) Almanac {
 	almanacMaps := [7][]Range{}
 	seeds := parseAlmanacSeeds(input[0])
@@ -108,6 +120,19 @@ func NewAlmanac(seeds []int, almanacMaps [7][]Range) *Almanac {
 		temperatureToHumidity: almanacMaps[temperatureToHumidityIdx],
 		humidityToLocation:    almanacMaps[humidityToLocationIdx],
 	}
+}
+
+func (a Almanac) GetSeedRanges() []int {
+	seedsRanges := make([]int, 0)
+	for i := 0; i < len(a.Seeds); i += 2 {
+		seedFrom := a.Seeds[i]
+		seedTo := seedFrom + a.Seeds[i+1]
+		for ; seedFrom < seedTo; seedFrom++ {
+			seedsRanges = append(seedsRanges, seedFrom)
+		}
+	}
+
+	return seedsRanges
 }
 
 func (a Almanac) GetSeedSoil(seed int) int {
