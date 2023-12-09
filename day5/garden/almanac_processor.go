@@ -9,6 +9,7 @@ import (
 )
 
 const numSep = " "
+const finishSignal = -1
 
 const (
 	seedsTitle                 = "seeds:"
@@ -55,11 +56,21 @@ func GetLowestSeedLocation(almanac Almanac) int {
 
 func GetLowestSeedRangedLocation(almanac Almanac) int {
 	minLocation := math.MaxInt
-	for _, seed := range almanac.GetSeedRanges() {
-		location := almanac.GetSeedLocation(seed)
+	rangesCount := 0
+	locationChn := make(chan int, 15)
+	ranges := almanac.GetSeedRanges()
+	for i := 0; i < len(ranges); i++ {
+		seedRange := ranges[i]
+		rangesCount += 1
+		go processSeedRangeLocationMinAsync(&seedRange, &almanac, locationChn)
+	}
+
+	for rangesCount > 0 {
+		location := <-locationChn
 		if location < minLocation {
 			minLocation = location
 		}
+		rangesCount -= 1
 	}
 
 	return minLocation
@@ -98,6 +109,19 @@ func (r *Range) IsInRange(num int) bool {
 	return num >= r.From && num <= r.To
 }
 
+func (r *Range) GenerateRange() <-chan int {
+	chn := make(chan int, 10)
+	go func() {
+		for i := r.From; i <= r.To; i++ {
+			chn <- i
+		}
+
+		close(chn)
+	}()
+
+	return chn
+}
+
 type Almanac struct {
 	Seeds                 []int
 	seedToSoil            []Range
@@ -122,14 +146,12 @@ func NewAlmanac(seeds []int, almanacMaps [7][]Range) *Almanac {
 	}
 }
 
-func (a Almanac) GetSeedRanges() []int {
-	seedsRanges := make([]int, 0)
+func (a Almanac) GetSeedRanges() []Range {
+	seedsRanges := make([]Range, 0)
 	for i := 0; i < len(a.Seeds); i += 2 {
 		seedFrom := a.Seeds[i]
-		seedTo := seedFrom + a.Seeds[i+1]
-		for ; seedFrom < seedTo; seedFrom++ {
-			seedsRanges = append(seedsRanges, seedFrom)
-		}
+		seedTo := seedFrom + a.Seeds[i+1] - 1
+		seedsRanges = append(seedsRanges, Range{seedFrom, seedTo, 0})
 	}
 
 	return seedsRanges
@@ -228,6 +250,18 @@ func parseNumsLine(line string) []int {
 	return nums
 }
 
+func processSeedRangeLocationMinAsync(seedRange *Range, almanac *Almanac, chn chan<- int) {
+	locationMin := math.MaxInt
+	for seed := range seedRange.GenerateRange() {
+		location := almanac.GetSeedLocation(seed)
+		if location < locationMin {
+			locationMin = location
+		}
+	}
+
+	chn <- locationMin
+}
+
 func isTitleLine(line string) bool {
 	if len(line) == 0 {
 		return false
@@ -244,8 +278,4 @@ func isNumberLine(line string) bool {
 	firstChar := rune(line[0])
 
 	return unicode.IsDigit(firstChar)
-}
-
-func isEmptyLine(line string) bool {
-	return len(line) == 0
 }
